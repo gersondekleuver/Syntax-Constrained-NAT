@@ -83,16 +83,17 @@ def save_txt(text, file):
     # print("write file to:" + file)
 
 
-def process_bpe(text):
+def process_bpe(text, tokenizer):
     # recover sentences from bpe sentences
     clean = []
     for line in text:
-        a = " ".join(line)
-        clean.append(" ".join(line).replace(" ##", "").split())
+        a = "".join(line).replace("Ġ", "")
+        clean.append(a.split(" "))
+
     return clean
 
 
-def pos_subid(pos_tag, ids):
+def pos_subid(pos_tag, ids, limit_dict):
     a = int(limit_dict[pos_tag])
     if a == 0:
         return pos_tag
@@ -114,12 +115,23 @@ def tokenize(folders, tokenizer, lang):
         for i, line in enumerate(text):
             # print(f"{i/len(text)*100:.2f}%", end="\r")
             tokenized.append(tokenizer.encode(line).tokens)
-        save_txt(tokenized, f"data/tokenized/{file.split('/')[-1]}.bpe")
+        save_txt(
+            tokenized, f"data/wmt14_data/tokenized/{file.split('/')[-1]}.bpe")
 
     return tokenized
 
 
-def getpos_bpe(data1, data2):
+def get_limit_dict(limit_data):
+    l_keys = []
+    l_ids = []
+    for line in limit_data:
+        line = line.split(" ")
+        l_keys.append(line[0])
+        l_ids.append(line[1])
+    return dict(zip(l_keys, l_ids))
+
+
+def getpos_bpe(data1, data2, limit_dict):
     """
     data1 = list of bpe sentences
     data2 = list of raw sentences
@@ -133,7 +145,7 @@ def getpos_bpe(data1, data2):
             print("#"*66)
             time1 = time.time()
         pos = []
-        line = data1[i]
+        line = data1[i].split(" ")
         pos_line = nltk.pos_tag(data2[i])
         p_line = []
         for w, p in pos_line:
@@ -156,16 +168,16 @@ def getpos_bpe(data1, data2):
                 pos.append(p_line[n])
                 break
             else:
-                if "##" not in line[j+1]:
+                if "##" not in line[j+1] or "Ġ" in line[j+1]:
                     pos.append(p_line[n])
                     j += 1
                 else:
                     k = 1
                     while k:
                         if j+k == len(line):
-                            pos.append(pos_subid(p_line[n], k))
+                            pos.append(pos_subid(p_line[n], k, limit_dict))
                             break
-                        pos.append(pos_subid(p_line[n], k))
+                        pos.append(pos_subid(p_line[n], k, limit_dict))
                         if "##" not in line[j+k]:
                             #                         pos.append(pos_subid(p_line[n],k+1))
                             break
