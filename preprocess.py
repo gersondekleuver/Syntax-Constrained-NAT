@@ -176,31 +176,3 @@ def getpos_bpe(data1, data2):
         assert len(pos) == len(line)
         pos_test.append(pos)
     return pos_test
-
-
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--train", action="store_true",
-                        default="data/wmt14_data/train/")
-    parser.add_argument("--valid", action="store_true",
-                        default="data/wmt14_data/valid/")
-    parser.add_argument("--test", action="store_true",
-                        default="data/wmt14_data/test/")
-    parser.add_argument("--lang", action="store_true", default="en")
-
-    args = parser.parse_args()
-
-    folders = [args.train, args.valid, args.test]
-    lang = args.lang
-
-    tokenizer = train_tokenizer(folders, lang)
-    tokenize(folders, tokenizer, lang)
-
-    # tagged_text_en = POS_tag(text_en, "eng")
-
-    # test_data1 = read_txt("wmt14_data/test.tgt")  # bpe
-    # test_data2 = process_bpe(test_data1)  # without bpe
-    # test_pos = getpos_bpe(test_data1, test_data2)
-    # save_txt(test_pos, "wmt14_data/pos/test.tgt")
