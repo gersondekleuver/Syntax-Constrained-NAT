@@ -86,9 +86,39 @@ def save_txt(text, file):
 def process_bpe(text, tokenizer):
     # recover sentences from bpe sentences
     clean = []
+
     for line in text:
-        a = "".join(line).replace("Ġ", "")
-        clean.append(a.split(" "))
+
+        clean_line = []
+        low_limit = 0
+
+        line = line.split(" ")
+        while low_limit < len(line):
+
+            if "Ġ" in line[low_limit]:
+                clean_line.append(line[low_limit].replace("Ġ", ""))
+                low_limit += 1
+
+            elif "Ġ" not in line[low_limit] and low_limit == len(line)-1:
+                clean_line.append(line[low_limit])
+                low_limit += 1
+
+            else:
+                high_limit = low_limit
+                string = ""
+                switch = True
+                while "Ġ" not in line[high_limit] and switch == True:
+                    if high_limit >= len(line)-1:
+                        switch = False
+                    else:
+                        high_limit += 1
+
+                for i in range(low_limit, high_limit):
+                    string += line[i]
+                clean_line.append(string.replace(" ", ""))
+                low_limit = high_limit
+
+        clean.append(clean_line)
 
     return clean
 
@@ -146,6 +176,8 @@ def getpos_bpe(data1, data2, limit_dict):
             time1 = time.time()
         pos = []
         line = data1[i].split(" ")
+
+        print(data2[i])
         pos_line = nltk.pos_tag(data2[i])
         p_line = []
         for w, p in pos_line:
@@ -169,6 +201,7 @@ def getpos_bpe(data1, data2, limit_dict):
                 break
             else:
                 if "##" not in line[j+1] or "Ġ" in line[j+1]:
+                    print(line, p_line, len(line), len(p_line))
                     pos.append(p_line[n])
                     j += 1
                 else:
@@ -178,7 +211,7 @@ def getpos_bpe(data1, data2, limit_dict):
                             pos.append(pos_subid(p_line[n], k, limit_dict))
                             break
                         pos.append(pos_subid(p_line[n], k, limit_dict))
-                        if "##" not in line[j+k]:
+                        if "##" not in line[j+k] or "Ġ" in line[j+k]:
                             #                         pos.append(pos_subid(p_line[n],k+1))
                             break
                         k += 1

@@ -34,6 +34,8 @@ if __name__ == "__main__":
         limit_dict = get_limit_dict(limit_data)
         test_data1 = read_txt(
             "data/wmt14_data/tokenized/newstest2014.en.bpe")  # bpe
+        print("preprocess bpe sentences")
         test_data2 = process_bpe(test_data1, tokenizer)  # without bpe
+        print("get pos tags")
         test_pos = getpos_bpe(test_data1, test_data2, limit_dict)
         save_txt(test_pos, "data/wmt14_data/pos/newstest2014.en.pos")
