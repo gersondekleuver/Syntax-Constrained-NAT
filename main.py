@@ -3,6 +3,7 @@ import os
 import sys
 from preprocess import *
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -13,29 +14,32 @@ if __name__ == "__main__":
                         default="data/wmt14_data/valid/")
     parser.add_argument("--test",
                         default="data/wmt14_data/test/")
-    parser.add_argument("--lang", default="en")
-    parser.add_argument("-t", "--tokenize",  default=False)
-    parser.add_argument("-p", "--pos", default=False)
+    parser.add_argument("--bpe", default="data/wmt14_data/bpe/")
     parser.add_argument("--limit", default="data/pos_limit100.txt")
-
+    parser.add_argument("--lang", default="en")
+    parser.add_argument("-t", "--tokenize",  default=False, action='store_true')
+    parser.add_argument("-p", "--pos", default=False, action='store_true')
+   
     args = parser.parse_args()
     folders = [args.train, args.valid, args.test]
     lang = args.lang
+    bpe_folder = args.bpe
     limit_data = read_txt(args.limit)
 
     tokenizer = train_tokenizer(folders, lang)
     if args.tokenize:
-
-        print("Tokenizing", args.tokenize)
+        print("Tokenizing")
         tokenize(folders, tokenizer, lang)
 
     if args.pos:
-        print("POS tagging")
         limit_dict = get_limit_dict(limit_data)
-        test_data1 = read_txt(
-            "data/wmt14_data/tokenized/newstest2014.en.bpe")  # bpe
-        print("preprocess bpe sentences")
-        test_data2 = process_bpe(test_data1, tokenizer)  # without bpe
-        print("get pos tags")
-        test_pos = getpos_bpe(test_data1, test_data2, limit_dict)
-        save_txt(test_pos, "data/wmt14_data/pos/newstest2014.en.pos")
+        files = get_bpe_files(bpe_folder, lang)
+
+        for file in files:
+            print(f"POS tagging {file}")
+            data1 = read_txt(file)
+            print("preprocess bpe sentences")
+            data2 = process_bpe(data1, tokenizer)
+            print("get pos tags")
+            pos = getpos_bpe(data1, data2, limit_dict)
+            save_txt(pos, file+".pos")

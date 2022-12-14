@@ -1,4 +1,3 @@
-from sacremoses import MosesTokenizer, MosesDetokenizer
 import time
 import pickle as pkl
 import re
@@ -35,7 +34,7 @@ def train_tokenizer(folders, lang):
             add_prefix_space=False)
 
         trainer = trainers.BpeTrainer(
-            vocab_size=40000, special_tokens=["<|endoftext|>"])
+            vocab_size=5000, special_tokens=["<|endoftext|>"])
         files = get_files(folders, lang)
         tokenizer.post_processor = processors.ByteLevel(trim_offsets=False)
         tokenizer.train(
@@ -65,6 +64,14 @@ def get_files(folders, lang):
                 files.append(folder+filename)
     return files
 
+def get_bpe_files(folder, lang):
+    files = []
+    # read filenames from folder
+    filenames = os.listdir(folder)
+    for filename in filenames:
+        if filename.endswith(f".{lang}.bpe"):
+            files.append(folder+filename)
+    return files
 
 def read_txt(file):
     f = open(file, "r", encoding="utf-8")
@@ -96,12 +103,22 @@ def process_bpe(text, tokenizer):
         while low_limit < len(line):
 
             if "Ġ" in line[low_limit]:
+                if low_limit == len(line)-1:
+                    clean_line.append(line[low_limit].replace("Ġ", ""))
+                    low_limit += 1
+
+                elif "Ġ" in line[low_limit+1]:
+                    clean_line.append(line[low_limit].replace("Ġ", ""))
+                    low_limit += 1
+                
+
+                    
                 clean_line.append(line[low_limit].replace("Ġ", ""))
                 low_limit += 1
 
             elif "Ġ" not in line[low_limit] and low_limit == len(line)-1:
-                clean_line.append(line[low_limit])
-                low_limit += 1
+                    clean_line.append(line[low_limit])
+                    low_limit += 1
 
             else:
                 high_limit = low_limit
@@ -146,7 +163,7 @@ def tokenize(folders, tokenizer, lang):
             # print(f"{i/len(text)*100:.2f}%", end="\r")
             tokenized.append(tokenizer.encode(line).tokens)
         save_txt(
-            tokenized, f"data/wmt14_data/tokenized/{file.split('/')[-1]}.bpe")
+            tokenized, f"data/wmt14_data/bpe/{file.split('/')[-1]}.bpe")
 
     return tokenized
 
@@ -177,7 +194,7 @@ def getpos_bpe(data1, data2, limit_dict):
         pos = []
         line = data1[i].split(" ")
 
-        print(data2[i])
+
         pos_line = nltk.pos_tag(data2[i])
         p_line = []
         for w, p in pos_line:
@@ -195,29 +212,43 @@ def getpos_bpe(data1, data2, limit_dict):
         j = 0
         n = 0
 
-        while j < len(line):
-            if j == len(line)-1:
-                pos.append(p_line[n])
-                break
+        print(p_line, line, data2[i])
+        
+        extended_pos_tags = []
+        low_limit = 0
+
+        while low_limit < len(line):
+
+            if "Ġ" in line[low_limit]:
+                clean_line.append(line[low_limit].replace("Ġ", ""))
+                low_limit += 1
+
+            elif "Ġ" not in line[low_limit] and low_limit == len(line)-1:
+                clean_line.append(line[low_limit])
+                low_limit += 1
+
             else:
-                if "##" not in line[j+1] or "Ġ" in line[j+1]:
-                    print(line, p_line, len(line), len(p_line))
-                    pos.append(p_line[n])
-                    j += 1
-                else:
-                    k = 1
-                    while k:
-                        if j+k == len(line):
-                            pos.append(pos_subid(p_line[n], k, limit_dict))
-                            break
-                        pos.append(pos_subid(p_line[n], k, limit_dict))
-                        if "##" not in line[j+k] or "Ġ" in line[j+k]:
-                            #                         pos.append(pos_subid(p_line[n],k+1))
-                            break
-                        k += 1
-                    j = j+k
-                n += 1
+                high_limit = low_limit
+                string = ""
+                switch = True
+                while "Ġ" not in line[high_limit] and switch == True:
+                    if high_limit >= len(line)-1:
+                        switch = False
+                    else:
+                        high_limit += 1
+
+                for i in range(low_limit, high_limit):
+                    string += line[i]
+                clean_line.append(string.replace(" ", ""))
+                low_limit = high_limit
+
+        clean.append(clean_line)
+
+
+
+
 
         assert len(pos) == len(line)
         pos_test.append(pos)
     return pos_test
+
