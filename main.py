@@ -17,11 +17,12 @@ if __name__ == "__main__":
     parser.add_argument("--bpe", default="data/wmt14_data/bpe/")
     parser.add_argument("--limit", default="data/pos_limit100.txt")
     parser.add_argument("--lang", default="en")
-    parser.add_argument("-t", "--tokenize",  default=False, action='store_true')
+    parser.add_argument("-t", "--tokenize",  default=False,
+                        action='store_true')
     parser.add_argument("-p", "--pos", default=False, action='store_true')
-   
+
     args = parser.parse_args()
-    folders = [args.train, args.valid, args.test]
+    folders = [args.test]
     lang = args.lang
     bpe_folder = args.bpe
     limit_data = read_txt(args.limit)

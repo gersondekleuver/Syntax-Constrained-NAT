@@ -64,6 +64,7 @@ def get_files(folders, lang):
                 files.append(folder+filename)
     return files
 
+
 def get_bpe_files(folder, lang):
     files = []
     # read filenames from folder
@@ -72,6 +73,7 @@ def get_bpe_files(folder, lang):
         if filename.endswith(f".{lang}.bpe"):
             files.append(folder+filename)
     return files
+
 
 def read_txt(file):
     f = open(file, "r", encoding="utf-8")
@@ -102,7 +104,7 @@ def process_bpe(text, tokenizer):
         line = line.split(" ")
         while low_limit < len(line):
 
-            if "Ġ" in line[low_limit]:
+            if "Ġ" in line[low_limit] or low_limit == 0:
                 if low_limit == len(line)-1:
                     clean_line.append(line[low_limit].replace("Ġ", ""))
                     low_limit += 1
@@ -110,30 +112,28 @@ def process_bpe(text, tokenizer):
                 elif "Ġ" in line[low_limit+1]:
                     clean_line.append(line[low_limit].replace("Ġ", ""))
                     low_limit += 1
-                
 
-                    
-                clean_line.append(line[low_limit].replace("Ġ", ""))
-                low_limit += 1
+                else:
 
-            elif "Ġ" not in line[low_limit] and low_limit == len(line)-1:
-                    clean_line.append(line[low_limit])
-                    low_limit += 1
+                    high_limit = low_limit + 1
+                    string = ""
+                    switch = True
+
+                    while "Ġ" not in line[high_limit] and switch == True:
+                        if high_limit >= len(line)-1:
+                            switch = False
+                        else:
+                            high_limit += 1
+
+                    for i in range(low_limit, high_limit):
+                        string += line[i]
+
+                    clean_line.append(string.replace(" ", "").replace("Ġ", ""))
+                    low_limit = high_limit
 
             else:
-                high_limit = low_limit
-                string = ""
-                switch = True
-                while "Ġ" not in line[high_limit] and switch == True:
-                    if high_limit >= len(line)-1:
-                        switch = False
-                    else:
-                        high_limit += 1
-
-                for i in range(low_limit, high_limit):
-                    string += line[i]
-                clean_line.append(string.replace(" ", ""))
-                low_limit = high_limit
+                clean_line.append(line[low_limit])
+                low_limit += 1
 
         clean.append(clean_line)
 
@@ -194,7 +194,6 @@ def getpos_bpe(data1, data2, limit_dict):
         pos = []
         line = data1[i].split(" ")
 
-
         pos_line = nltk.pos_tag(data2[i])
         p_line = []
         for w, p in pos_line:
@@ -209,46 +208,56 @@ def getpos_bpe(data1, data2, limit_dict):
                     p_line.append("WP")
                 else:
                     p_line.append(p)
-        j = 0
-        n = 0
 
-        print(p_line, line, data2[i])
-        
         extended_pos_tags = []
-        low_limit = 0
+        POS_index = 0
+        LINE_index = 0
 
-        while low_limit < len(line):
+        while LINE_index < len(line):
 
-            if "Ġ" in line[low_limit]:
-                clean_line.append(line[low_limit].replace("Ġ", ""))
-                low_limit += 1
+            if "Ġ" in line[LINE_index] or LINE_index == 0:
+                if LINE_index == len(line)-1:
 
-            elif "Ġ" not in line[low_limit] and low_limit == len(line)-1:
-                clean_line.append(line[low_limit])
-                low_limit += 1
+                    extended_pos_tags.append(
+                        p_line[POS_index])
+                    LINE_index += 1
+                    POS_index += 1
+
+                elif "Ġ" in line[LINE_index+1]:
+                    extended_pos_tags.append(
+                        p_line[POS_index])
+                    LINE_index += 1
+                    POS_index += 1
+
+                else:
+
+                    high_limit = LINE_index + 1
+
+                    string = ""
+                    switch = True
+
+                    while "Ġ" not in line[high_limit] and switch == True:
+                        if high_limit >= len(line)-1:
+                            switch = False
+                        else:
+                            high_limit += 1
+
+                    POS_count = 0
+                    for _ in range(LINE_index, high_limit):
+
+                        extended_pos_tags.append(
+                            f"{p_line[POS_index]}" + f"{POS_count}")
+                        LINE_index += 1
+                        x += 1
+
+                    POS_index += 1
 
             else:
-                high_limit = low_limit
-                string = ""
-                switch = True
-                while "Ġ" not in line[high_limit] and switch == True:
-                    if high_limit >= len(line)-1:
-                        switch = False
-                    else:
-                        high_limit += 1
+                extended_pos_tags.append(
+                    p_line[POS_index])
+                LINE_index += 1
+                POS_index += 1
 
-                for i in range(low_limit, high_limit):
-                    string += line[i]
-                clean_line.append(string.replace(" ", ""))
-                low_limit = high_limit
-
-        clean.append(clean_line)
-
-
-
-
-
-        assert len(pos) == len(line)
-        pos_test.append(pos)
+        assert len(extended_pos_tags) == len(line)
+        pos_test.append(extended_pos_tags)
     return pos_test
-
