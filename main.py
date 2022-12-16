@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--pos", default=False, action='store_true')
 
     args = parser.parse_args()
-    folders = [args.test]
+    folders = [args.test, args.valid, args.train]
     lang = args.lang
     bpe_folder = args.bpe
     limit_data = read_txt(args.limit)

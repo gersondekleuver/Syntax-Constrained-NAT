@@ -99,41 +99,41 @@ def process_bpe(text, tokenizer):
     for line in text:
 
         clean_line = []
-        low_limit = 0
+        Line_index = 0
 
         line = line.split(" ")
-        while low_limit < len(line):
+        while Line_index < len(line):
 
-            if "Ġ" in line[low_limit] or low_limit == 0:
-                if low_limit == len(line)-1:
-                    clean_line.append(line[low_limit].replace("Ġ", ""))
-                    low_limit += 1
+            if "Ġ" in line[Line_index] or Line_index == 0:
+                if Line_index == len(line)-1:
+                    clean_line.append(line[Line_index].replace("Ġ", ""))
+                    Line_index += 1
 
-                elif "Ġ" in line[low_limit+1]:
-                    clean_line.append(line[low_limit].replace("Ġ", ""))
-                    low_limit += 1
+                elif "Ġ" in line[Line_index+1]:
+                    clean_line.append(line[Line_index].replace("Ġ", ""))
+                    Line_index += 1
 
                 else:
 
-                    high_limit = low_limit + 1
+                    Upper_limit = Line_index + 1
                     string = ""
                     switch = True
 
-                    while "Ġ" not in line[high_limit] and switch == True:
-                        if high_limit >= len(line)-1:
+                    while "Ġ" not in line[Upper_limit] and switch == True:
+                        if Upper_limit >= len(line)-1:
                             switch = False
                         else:
-                            high_limit += 1
+                            Upper_limit += 1
 
-                    for i in range(low_limit, high_limit):
+                    for i in range(Line_index, Upper_limit):
                         string += line[i]
 
                     clean_line.append(string.replace(" ", "").replace("Ġ", ""))
-                    low_limit = high_limit
+                    Line_index = Upper_limit
 
             else:
-                clean_line.append(line[low_limit])
-                low_limit += 1
+                clean_line.append(line[Line_index])
+                Line_index += 1
 
         clean.append(clean_line)
 
@@ -210,53 +210,53 @@ def getpos_bpe(data1, data2, limit_dict):
                     p_line.append(p)
 
         extended_pos_tags = []
-        POS_index = 0
-        LINE_index = 0
+        Pos_index = 0
+        Line_index = 0
 
-        while LINE_index < len(line):
+        while Line_index < len(line):
 
-            if "Ġ" in line[LINE_index] or LINE_index == 0:
-                if LINE_index == len(line)-1:
+            if "Ġ" in line[Line_index] or Line_index == 0:
+                if Line_index == len(line)-1:
 
                     extended_pos_tags.append(
-                        p_line[POS_index])
-                    LINE_index += 1
-                    POS_index += 1
+                        p_line[Pos_index])
+                    Line_index += 1
+                    Pos_index += 1
 
-                elif "Ġ" in line[LINE_index+1]:
+                elif "Ġ" in line[Line_index+1]:
                     extended_pos_tags.append(
-                        p_line[POS_index])
-                    LINE_index += 1
-                    POS_index += 1
+                        p_line[Pos_index])
+                    Line_index += 1
+                    Pos_index += 1
 
                 else:
 
-                    high_limit = LINE_index + 1
+                    Upper_limit = Line_index + 1
 
                     string = ""
                     switch = True
 
-                    while "Ġ" not in line[high_limit] and switch == True:
-                        if high_limit >= len(line)-1:
+                    while "Ġ" not in line[Upper_limit] and switch == True:
+                        if Upper_limit >= len(line)-1:
                             switch = False
                         else:
-                            high_limit += 1
+                            Upper_limit += 1
 
                     POS_count = 0
-                    for _ in range(LINE_index, high_limit):
+                    for _ in range(Line_index, Upper_limit):
 
                         extended_pos_tags.append(
-                            f"{p_line[POS_index]}" + f"{POS_count}")
-                        LINE_index += 1
-                        x += 1
+                            f"{p_line[Pos_index]}" + f"{POS_count}")
+                        Line_index += 1
+                        POS_count += 1
 
-                    POS_index += 1
+                    Pos_index += 1
 
             else:
                 extended_pos_tags.append(
-                    p_line[POS_index])
-                LINE_index += 1
-                POS_index += 1
+                    p_line[Pos_index])
+                Line_index += 1
+                Pos_index += 1
 
         assert len(extended_pos_tags) == len(line)
         pos_test.append(extended_pos_tags)
