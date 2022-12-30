@@ -1,11 +1,5 @@
 import time
-import pickle as pkl
-import re
-from collections import defaultdict
 import nltk
-from tokenizers.models import BPE, Unigram, WordLevel, WordPiece
-from transformers import PreTrainedTokenizerFast
-
 from tokenizers import (
     decoders,
     models,
@@ -16,15 +10,14 @@ from tokenizers import (
     Tokenizer,
 )
 import os
-import sys
 import argparse
 
 
 def train_tokenizer(folders, lang):
     # load Pretrained tokenizer
-    if os.path.exists(f"/data/wmt14_data/bpe/vocab_{lang}.json"):
+    if os.path.exists(f"/../data/wmt14_data/bpe/vocab_{lang}.json"):
         tokenizer = Tokenizer.from_file(
-            f"/data/wmt14_data/bpe/vocab_{lang}.json")
+            f"/../data/wmt14_data/bpe/vocab_{lang}.json")
 
     else:
         # Train tokenizer
@@ -41,7 +34,7 @@ def train_tokenizer(folders, lang):
             files, trainer=trainer)
         tokenizer.decoder = decoders.ByteLevel()
         # Save tokenizer
-        tokenizer.save(f"/data/wmt14_data/bpe/vocab_{lang}.json")
+        tokenizer.save(f"/../data/wmt14_data/bpe/vocab_{lang}.json")
 
     return tokenizer
 
@@ -163,7 +156,7 @@ def tokenize(folders, tokenizer, lang):
             # print(f"{i/len(text)*100:.2f}%", end="\r")
             tokenized.append(tokenizer.encode(line).tokens)
         save_txt(
-            tokenized, f"/data/wmt14_data/bpe/{file.split('/')[-1]}.bpe")
+            tokenized, f"/../data/wmt14_data/bpe/{file.split('/')[-1]}.bpe")
 
     return tokenized
 
@@ -261,3 +254,46 @@ def getpos_bpe(data1, data2, limit_dict):
         assert len(extended_pos_tags) == len(line)
         pos_test.append(extended_pos_tags)
     return pos_test
+
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--train",
+                        default="/../data/wmt14_data/train/")
+    parser.add_argument("--valid",
+                        default="/../data/wmt14_data/valid/")
+    parser.add_argument("--test",
+                        default="/../data/wmt14_data/test/")
+    parser.add_argument("--bpe", default="/../data/wmt14_data/bpe/")
+    parser.add_argument("--limit", default="/../data/pos_limit100.txt")
+    parser.add_argument("--lang", default="en")
+    parser.add_argument("-t", "--tokenize",  default=False,
+                        action='store_true')
+    parser.add_argument("-p", "--pos", default=False, action='store_true')
+
+    args = parser.parse_args()
+    folders = [args.valid]
+    lang = args.lang
+    bpe_folder = args.bpe
+    limit_data = read_txt(args.limit)
+
+    tokenizer = train_tokenizer(folders, lang)
+    if args.tokenize:
+        print("Tokenizing")
+        tokenize(folders, tokenizer, lang)
+
+    if args.pos:
+        limit_dict = get_limit_dict(limit_data)
+        files = get_bpe_files(bpe_folder, lang)
+
+        for file in files:
+            print(f"POS tagging {file}")
+            data1 = read_txt(file)
+            print("preprocess bpe sentences")
+            data2 = process_bpe(data1, tokenizer)
+            print("get pos tags")
+            pos = getpos_bpe(data1, data2, limit_dict)
+            save_txt(pos, file+".pos")
